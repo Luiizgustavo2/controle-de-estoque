@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus ERP v5.0 Ultimate</title>
+    <title>Nexus ERP v5.3 Mobile Limpo</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,12 +14,48 @@
         :root { --primary: #4e73df; --secondary: #858796; --success: #1cc88a; --danger: #e74a3b; --warning: #f6c23e; --bg: #f8f9fc; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); overflow-x: hidden; }
         
-        /* Sidebar e Nav */
-        .sidebar { min-height: 100vh; background: linear-gradient(180deg, #4e73df 10%, #224abe 100%); color: white; transition: 0.3s; }
+        /* Sidebar e Nav Desktop */
+        .sidebar { min-height: 100vh; background: linear-gradient(180deg, #4e73df 10%, #224abe 100%); color: white; transition: 0.3s; z-index: 1000; }
         .brand { padding: 20px; font-size: 1.5rem; font-weight: 700; text-align: center; letter-spacing: 1px; }
         .nav-link { color: rgba(255,255,255,0.8); margin: 5px 15px; border-radius: 10px; transition: 0.3s; cursor: pointer; padding: 12px; }
         .nav-link:hover, .nav-link.active { background: white; color: var(--primary); transform: translateX(5px); font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         
+        /* MOBILE / RESPONSIVO */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -260px; /* Escondido por padrão */
+                height: 100vh;
+                width: 250px;
+                transition: 0.3s;
+                box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+            }
+            .sidebar.show { left: 0; } /* Mostra o menu */
+            
+            .mobile-header {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px;
+                background: linear-gradient(90deg, #4e73df 10%, #224abe 100%);
+                color: white;
+                margin-bottom: 20px;
+            }
+            .overlay {
+                display: none;
+                position: fixed;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+                backdrop-filter: blur(2px);
+            }
+            .overlay.show { display: block; }
+            main { padding-top: 0 !important; }
+        }
+        
+        .mobile-header { display: none; } /* Esconde header mobile no PC */
+
         /* Cards */
         .card-custom { border: none; border-radius: 15px; background: white; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.10); transition: 0.3s; }
         .stat-card { border-left: 0.35rem solid; cursor: pointer; }
@@ -28,7 +64,14 @@
         /* PDV */
         .pdv-product-card { cursor: pointer; transition: 0.2s; border: 1px solid #e3e6f0; user-select: none; }
         .pdv-product-card:hover { border-color: var(--primary); background-color: #f4f7ff; transform: scale(1.02); }
+        
+        /* Carrinho Responsivo */
         .cart-area { background: white; border-radius: 15px; box-shadow: -5px 0 15px rgba(0,0,0,0.05); height: calc(100vh - 40px); display: flex; flex-direction: column; position: sticky; top: 20px; }
+        
+        @media (max-width: 768px) {
+            .cart-area { height: auto; min-height: 400px; position: relative; top: 0; margin-top: 20px; }
+        }
+
         .cart-items { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
         
         /* Badges e Utilitários */
@@ -36,6 +79,7 @@
         .qty-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; background: #fff; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .qty-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
         .hide { display: none !important; }
+        .hover-shadow:hover { background-color: #ffeaea; border-radius: 5px; }
         
         /* Scrollbar Personalizada */
         ::-webkit-scrollbar { width: 8px; }
@@ -53,25 +97,36 @@
 </head>
 <body>
 
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<div class="mobile-header shadow-sm">
+    <div class="fw-bold fs-4"><i class="fas fa-rocket me-2"></i>NEXUS</div>
+    <button class="btn btn-outline-light border-0" onclick="toggleMenu()">
+        <i class="fas fa-bars fa-2x"></i>
+    </button>
+</div>
+
 <div class="container-fluid">
     <div class="row">
-        <nav class="col-md-2 d-none d-md-block sidebar">
-            <div class="brand"><i class="fas fa-rocket"></i> NEXUS PRO</div>
+        <nav class="col-md-2 sidebar" id="sidebar">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="brand w-100"><i class="fas fa-rocket"></i> NEXUS PRO</div>
+            </div>
             <hr class="bg-white opacity-25">
             <ul class="nav flex-column mt-4 gap-2">
-                <li class="nav-item"><a class="nav-link active" onclick="navTo('dashboard')"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" onclick="navTo('pdv')"><i class="fas fa-cash-register me-2"></i> PDV (Vendas)</a></li>
-                <li class="nav-item"><a class="nav-link" onclick="navTo('estoque')"><i class="fas fa-box-open me-2"></i> Estoque</a></li>
-                <li class="nav-item"><a class="nav-link" onclick="navTo('financeiro')"><i class="fas fa-wallet me-2"></i> Financeiro</a></li>
-                <li class="nav-item"><a class="nav-link" onclick="navTo('os')"><i class="fas fa-tools me-2"></i> Ordens de Serviço</a></li>
-                <li class="nav-item mt-5"><a class="nav-link text-warning" onclick="resetarSistema()"><i class="fas fa-sync me-2"></i> Resetar Dados</a></li>
+                <li class="nav-item"><a class="nav-link active" onclick="navTo('dashboard'); toggleMenu(true)"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" onclick="navTo('pdv'); toggleMenu(true)"><i class="fas fa-cash-register me-2"></i> PDV (Vendas)</a></li>
+                <li class="nav-item"><a class="nav-link" onclick="navTo('estoque'); toggleMenu(true)"><i class="fas fa-box-open me-2"></i> Estoque</a></li>
+                <li class="nav-item"><a class="nav-link" onclick="navTo('financeiro'); toggleMenu(true)"><i class="fas fa-wallet me-2"></i> Financeiro</a></li>
+                <li class="nav-item"><a class="nav-link" onclick="navTo('os'); toggleMenu(true)"><i class="fas fa-tools me-2"></i> Ordens de Serviço</a></li>
+                <li class="nav-item mt-5"><a class="nav-link text-warning" onclick="resetarSistema(); toggleMenu(true)"><i class="fas fa-sync me-2"></i> Resetar Dados</a></li>
             </ul>
         </nav>
 
         <main class="col-md-10 ms-sm-auto px-4 pt-4 pb-5">
             
             <div id="dashboard" class="section fade-in">
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <div>
                         <h2 class="fw-bold text-secondary mb-0">Visão Geral</h2>
                         <small class="text-muted">Acompanhamento em tempo real</small>
@@ -80,47 +135,47 @@
                 </div>
 
                 <div class="row g-4 mb-4">
-                    <div class="col-md-3">
-                        <div class="card card-custom stat-card border-success p-4">
+                    <div class="col-6 col-md-3">
+                        <div class="card card-custom stat-card border-success p-3 p-md-4">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <small class="text-success fw-bold text-uppercase">Entradas (Mês)</small>
-                                    <h4 id="dash-entradas" class="fw-bold mt-2">R$ 0,00</h4>
+                                    <small class="text-success fw-bold text-uppercase" style="font-size: 0.7rem;">Entradas</small>
+                                    <h5 id="dash-entradas" class="fw-bold mt-2">R$ 0,00</h5>
                                 </div>
-                                <i class="fas fa-arrow-up text-success opacity-50 fa-2x"></i>
+                                <i class="fas fa-arrow-up text-success opacity-50 fa-2x d-none d-md-block"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card card-custom stat-card border-danger p-4">
+                    <div class="col-6 col-md-3">
+                        <div class="card card-custom stat-card border-danger p-3 p-md-4">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <small class="text-danger fw-bold text-uppercase">Saídas (Mês)</small>
-                                    <h4 id="dash-saidas" class="fw-bold mt-2">R$ 0,00</h4>
+                                    <small class="text-danger fw-bold text-uppercase" style="font-size: 0.7rem;">Saídas</small>
+                                    <h5 id="dash-saidas" class="fw-bold mt-2">R$ 0,00</h5>
                                 </div>
-                                <i class="fas fa-arrow-down text-danger opacity-50 fa-2x"></i>
+                                <i class="fas fa-arrow-down text-danger opacity-50 fa-2x d-none d-md-block"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card card-custom stat-card border-primary p-4">
+                    <div class="col-6 col-md-3">
+                        <div class="card card-custom stat-card border-primary p-3 p-md-4">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <small class="text-primary fw-bold text-uppercase">Saldo Líquido</small>
-                                    <h4 id="dash-saldo" class="fw-bold mt-2">R$ 0,00</h4>
+                                    <small class="text-primary fw-bold text-uppercase" style="font-size: 0.7rem;">Saldo</small>
+                                    <h5 id="dash-saldo" class="fw-bold mt-2">R$ 0,00</h5>
                                 </div>
-                                <i class="fas fa-wallet text-primary opacity-50 fa-2x"></i>
+                                <i class="fas fa-wallet text-primary opacity-50 fa-2x d-none d-md-block"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card card-custom stat-card border-warning p-4" onclick="verEstoqueBaixo()">
+                    <div class="col-6 col-md-3">
+                        <div class="card card-custom stat-card border-warning p-3 p-md-4" onclick="verEstoqueBaixo()">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <small class="text-warning fw-bold text-uppercase">Estoque Crítico</small>
-                                    <h4 id="dash-estoque-baixo" class="fw-bold mt-2">0</h4>
+                                    <small class="text-warning fw-bold text-uppercase" style="font-size: 0.7rem;">Crítico</small>
+                                    <h5 id="dash-estoque-baixo" class="fw-bold mt-2">0</h5>
                                 </div>
-                                <i class="fas fa-exclamation-triangle text-warning opacity-50 fa-2x"></i>
+                                <i class="fas fa-exclamation-triangle text-warning opacity-50 fa-2x d-none d-md-block"></i>
                             </div>
                         </div>
                     </div>
@@ -129,7 +184,7 @@
                 <div class="card card-custom p-4">
                     <h5 class="fw-bold text-secondary mb-3"><i class="fas fa-history me-2"></i>Últimas Movimentações</h5>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle">
+                        <table class="table table-hover align-middle" style="min-width: 500px;">
                             <thead class="table-light">
                                 <tr>
                                     <th>Tipo</th>
@@ -139,7 +194,7 @@
                                 </tr>
                             </thead>
                             <tbody id="dash-ultimas-movimentacoes">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -147,10 +202,10 @@
 
             <div id="pdv" class="section hide">
                 <div class="row g-0">
-                    <div class="col-md-8 pe-3">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="col-md-8 pe-md-3 mb-4">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
                             <h3 class="fw-bold text-secondary">Ponto de Venda</h3>
-                            <div class="input-group w-50 shadow-sm">
+                            <div class="input-group w-100 w-md-50 shadow-sm">
                                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
                                 <input type="text" id="pdv-search" class="form-control form-control-lg border-start-0" placeholder="Buscar produto..." onkeyup="renderPDVGrid()">
                             </div>
@@ -172,7 +227,7 @@
                                     <span id="pdv-total">R$ 0,00</span>
                                 </div>
                                 <button class="btn btn-success w-100 btn-lg fw-bold shadow-sm py-3" onclick="abrirModalPagamento()">
-                                    <i class="fas fa-check-circle me-2"></i> FINALIZAR VENDA
+                                    <i class="fas fa-check-circle me-2"></i> FINALIZAR
                                 </button>
                             </div>
                         </div>
@@ -181,7 +236,7 @@
             </div>
 
             <div id="estoque" class="section hide">
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <h2 class="fw-bold text-secondary">Controle de Estoque</h2>
                     <div>
                         <button class="btn btn-outline-secondary me-2 hide" id="btn-ver-todos" onclick="renderEstoque(false)">Ver Todos</button>
@@ -190,7 +245,7 @@
                 </div>
                 <div class="card card-custom p-0 overflow-hidden">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
                             <thead class="bg-light text-uppercase text-muted small">
                                 <tr>
                                     <th class="ps-4">Produto</th>
@@ -208,34 +263,36 @@
             </div>
 
             <div id="financeiro" class="section hide">
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <h2 class="fw-bold text-secondary">Fluxo Financeiro</h2>
                     <button class="btn btn-primary rounded-pill shadow px-4" data-bs-toggle="modal" data-bs-target="#modalFinanca"><i class="fas fa-plus me-2"></i> Novo Lançamento</button>
                 </div>
                 <div class="card card-custom p-0 overflow-hidden">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light text-uppercase text-muted small">
-                            <tr>
-                                <th class="ps-4">Tipo</th>
-                                <th>Categoria/Descrição</th>
-                                <th>Pagamento</th>
-                                <th>Valor</th>
-                                <th>Data</th>
-                                <th class="text-end pe-4">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-financa"></tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
+                            <thead class="bg-light text-uppercase text-muted small">
+                                <tr>
+                                    <th class="ps-4">Tipo</th>
+                                    <th>Categoria/Descrição</th>
+                                    <th>Pagamento</th>
+                                    <th>Valor</th>
+                                    <th>Data</th>
+                                    <th class="text-end pe-4">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-financa"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
             <div id="os" class="section hide">
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <h2 class="fw-bold text-secondary">Ordens de Serviço</h2>
                     <button class="btn btn-primary rounded-pill shadow px-4" onclick="abrirModalOS()"><i class="fas fa-clipboard-list me-2"></i> Nova O.S.</button>
                 </div>
                 <div class="row g-4" id="lista-os">
-                    </div>
+                </div>
             </div>
 
         </main>
@@ -395,18 +452,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // --- NÚCLEO DO SISTEMA (Base de Dados Local) ---
+    // --- NÚCLEO DO SISTEMA ---
     const DB = {
         get: (key) => JSON.parse(localStorage.getItem(key)) || [],
         set: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
         init: () => {
-            if(!localStorage.getItem('produtos')) DB.set('produtos', [
-                {id: 1, nome: 'Exemplo Produto A', qtd: 10, min: 5, custo: 50, venda: 100},
-                {id: 2, nome: 'Exemplo Produto B', qtd: 2, min: 5, custo: 20, venda: 45}
-            ]);
+            // INICIALIZA LIMPO (SEM PRODUTOS EXEMPLO)
+            if(!localStorage.getItem('produtos')) DB.set('produtos', []);
             if(!localStorage.getItem('financas')) DB.set('financas', []);
             if(!localStorage.getItem('os')) DB.set('os', []);
-            if(!localStorage.getItem('historico')) DB.set('historico', []); // NOVO: Log de tudo
+            if(!localStorage.getItem('historico')) DB.set('historico', []); 
         }
     };
     
@@ -422,14 +477,53 @@
 
     function registrarLog(tipo, desc, valor) {
         const logs = DB.get('historico');
-        logs.unshift({ // Adiciona no início
+        logs.unshift({ 
             tipo, 
             desc, 
             valor, 
             data: new Date().toISOString()
         });
-        if(logs.length > 50) logs.pop(); // Mantém apenas os últimos 50 registros
+        if(logs.length > 50) logs.pop(); 
         DB.set('historico', logs);
+    }
+
+    // --- MENU MOBILE ---
+    function toggleMenu(forceClose = false) {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        
+        if (forceClose) {
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+        } else {
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+    }
+
+    function deletarLog(index) {
+        Swal.fire({
+            title: 'Apagar registro?',
+            text: "Deseja remover este item do histórico?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Sim, apagar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const logs = DB.get('historico');
+                logs.splice(index, 1);
+                DB.set('historico', logs);
+                atualizarDashboard(); 
+                
+                const Toast = Swal.mixin({
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 1500,
+                    didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
+                });
+                Toast.fire({ icon: 'success', title: 'Registro removido' });
+            }
+        });
     }
 
     function navTo(id) {
@@ -453,14 +547,11 @@
 
     // --- DASHBOARD ---
     function atualizarDashboard() {
-        // Data
         document.getElementById('data-hoje').innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-        // Cálculos
         const financas = DB.get('financas');
         const produtos = DB.get('produtos');
         
-        // Filtro Mês Atual
         const hoje = new Date();
         const mesAtual = hoje.getMonth();
         const anoAtual = hoje.getFullYear();
@@ -475,22 +566,21 @@
         
         const estoqueBaixo = produtos.filter(p => p.qtd < (p.min || 5)).length;
 
-        // Render Cards
         document.getElementById('dash-entradas').innerText = formatCurrency(ent);
         document.getElementById('dash-saidas').innerText = formatCurrency(sai);
         document.getElementById('dash-saldo').innerText = formatCurrency(ent - sai);
         document.getElementById('dash-estoque-baixo').innerText = estoqueBaixo;
 
-        // Render Tabela Últimas Movimentações (NOVO RECURSO)
-        const logs = DB.get('historico').slice(0, 6); // Pega as 6 últimas
+        const logs = DB.get('historico');
         const tbody = document.getElementById('dash-ultimas-movimentacoes');
         tbody.innerHTML = '';
         
-        logs.forEach(log => {
+        logs.slice(0, 6).forEach((log, index) => {
             let badge = '';
             if(log.tipo === 'Venda') badge = '<span class="badge bg-success">Venda</span>';
-            else if(log.tipo === 'Compra/Saída') badge = '<span class="badge bg-danger">Saída</span>';
+            else if(log.tipo === 'Compra/Saída' || log.tipo === 'Exclusão') badge = '<span class="badge bg-danger">Saída</span>';
             else if(log.tipo === 'Serviço') badge = '<span class="badge bg-primary">Serviço</span>';
+            else if(log.tipo === 'Estoque') badge = '<span class="badge bg-warning text-dark">Estoque</span>';
             else badge = '<span class="badge bg-secondary">Sistema</span>';
 
             tbody.innerHTML += `
@@ -498,26 +588,40 @@
                     <td>${badge}</td>
                     <td>${log.desc}</td>
                     <td class="fw-bold text-dark">${formatCurrency(log.valor)}</td>
-                    <td class="text-muted small">${formatDate(log.data)}</td>
+                    <td class="text-muted small">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>${formatDate(log.data)}</span>
+                            <button class="btn btn-sm text-danger border-0 hover-shadow" onclick="deletarLog(${index})" title="Apagar este registro">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </td>
                 </tr>
             `;
         });
         if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma movimentação recente.</td></tr>';
     }
 
-    // --- PDV (Ponto de Venda) ---
+    // --- PDV ---
     function renderPDVGrid() {
         const container = document.getElementById('pdv-grid');
         container.innerHTML = '';
         const search = document.getElementById('pdv-search').value.toLowerCase();
         
-        DB.get('produtos').forEach(p => {
+        const produtos = DB.get('produtos');
+
+        if(produtos.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum produto cadastrado. Vá em "Estoque" para adicionar.</div>';
+            return;
+        }
+
+        produtos.forEach(p => {
             if(p.nome.toLowerCase().includes(search)) {
                 container.innerHTML += `
-                    <div class="col-md-4 col-lg-4">
+                    <div class="col-6 col-lg-4">
                         <div class="card p-3 pdv-product-card h-100 shadow-sm border-0" onclick="adicionarAoCarrinho(${p.id})">
                             <div class="d-flex justify-content-between mb-2">
-                                <span class="badge bg-light text-secondary border">Estoque: ${p.qtd}</span>
+                                <span class="badge bg-light text-secondary border small">Est: ${p.qtd}</span>
                             </div>
                             <div class="fw-bold text-dark mb-1 text-truncate" title="${p.nome}">${p.nome}</div>
                             <div class="h5 text-primary fw-bold mb-0">${formatCurrency(p.venda)}</div>
@@ -601,10 +705,8 @@
             listaItensCupom += `<div class="d-flex justify-content-between small"><span>${item.qty}x ${item.nome}</span><span>${formatCurrency(item.venda * item.qty)}</span></div>`;
         });
 
-        // 1. Atualiza Estoque
         DB.set('produtos', produtos);
 
-        // 2. Lança Financeiro
         financas.push({ 
             id: Date.now(),
             tipo: 'entrada', 
@@ -616,10 +718,8 @@
         });
         DB.set('financas', financas);
 
-        // 3. Registra Log Global
         registrarLog('Venda', `Venda via PDV (${carrinho.length} itens)`, total);
 
-        // 4. Gera Cupom e Limpa
         bootstrap.Modal.getInstance(document.getElementById('modalPagamento')).hide();
         
         Swal.fire({
@@ -653,7 +753,6 @@
             const min = p.min || 5;
             if (filtroBaixo && p.qtd >= min) return;
 
-            // Cálculo de Margem
             const lucro = p.venda - p.custo;
             const margem = p.venda > 0 ? ((lucro / p.venda) * 100).toFixed(0) : 0;
             let corMargem = 'text-success';
@@ -695,7 +794,6 @@
         new bootstrap.Modal(document.getElementById('modalProduto')).show();
     }
 
-    // Listener do Formulário de Produto (Salvar/Editar)
     document.getElementById('form-produto').addEventListener('submit', function(e) {
         e.preventDefault();
         const id = document.getElementById('prod-id').value;
@@ -725,7 +823,6 @@
         Swal.fire('Sucesso', 'Produto salvo com sucesso!', 'success');
     });
 
-    // --- FUNÇÃO GENÉRICA DE EXCLUSÃO ---
     function deletarItem(chave, idx, callbackRender) {
         Swal.fire({
             title: 'Tem certeza?',
@@ -740,7 +837,6 @@
                 const itemRemovido = dados.splice(idx, 1);
                 DB.set(chave, dados);
                 
-                // Log da exclusão
                 let desc = itemRemovido[0].nome || itemRemovido[0].desc || itemRemovido[0].cliente || 'Item';
                 registrarLog('Exclusão', `Item removido de ${chave}: ${desc}`, 0);
 
@@ -754,7 +850,7 @@
     function renderFinancas() {
         const tbody = document.getElementById('lista-financa');
         tbody.innerHTML = '';
-        const financas = DB.get('financas').sort((a,b) => new Date(b.dataISO) - new Date(a.dataISO)); // Ordenar por data (mais recente)
+        const financas = DB.get('financas').sort((a,b) => new Date(b.dataISO) - new Date(a.dataISO));
 
         financas.forEach((f, idx) => {
             const isEntrada = f.tipo === 'entrada';
@@ -805,7 +901,7 @@
         Swal.fire('Sucesso', 'Lançamento registrado!', 'success');
     });
 
-    // --- ORDENS DE SERVIÇO (OS) ---
+    // --- ORDENS DE SERVIÇO ---
     function renderOS() {
         const container = document.getElementById('lista-os');
         container.innerHTML = '';
@@ -883,7 +979,6 @@
                 os.concluido = true;
                 DB.set('os', osList);
 
-                // Lança no financeiro automaticamente
                 const financas = DB.get('financas');
                 financas.push({
                     id: Date.now(),
@@ -903,10 +998,9 @@
         });
     }
 
-    // --- SISTEMA ---
     function verEstoqueBaixo() {
         navTo('estoque');
-        renderEstoque(true); // Ativa filtro de estoque baixo
+        renderEstoque(true); 
     }
 
     function resetarSistema() {
@@ -928,98 +1022,9 @@
         });
     }
 
-    // Inicialização
     document.addEventListener('DOMContentLoaded', () => {
         navTo('dashboard');
     });
-
-// --- NOVO: FUNCIONALIDADE DE EXCLUIR HISTÓRICO (Cole no final do script) ---
-
-    // 1. Função para deletar um item específico do histórico
-    function deletarLog(index) {
-        Swal.fire({
-            title: 'Apagar registro?',
-            text: "Deseja remover este item do histórico?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sim, apagar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const logs = DB.get('historico');
-                logs.splice(index, 1); // Remove o item baseado na posição
-                DB.set('historico', logs);
-                atualizarDashboard(); // Atualiza a tela imediatamente
-                
-                const Toast = Swal.mixin({
-                    toast: true, position: 'top-end', showConfirmButton: false, timer: 1500,
-                    didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
-                });
-                Toast.fire({ icon: 'success', title: 'Registro removido' });
-            }
-        });
-    }
-
-    // 2. Sobrescrevemos a função atualizarDashboard para adicionar o botão "X"
-    // O JavaScript permite redefinir a função. Esta nova versão substitui a antiga.
-    function atualizarDashboard() {
-        // --- Parte 1: Cards e Data (Mantida igual) ---
-        document.getElementById('data-hoje').innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
-        
-        const financas = DB.get('financas');
-        const produtos = DB.get('produtos');
-        const hoje = new Date();
-        const mesAtual = hoje.getMonth();
-        const anoAtual = hoje.getFullYear();
-
-        const financasMes = financas.filter(f => {
-            const dataF = new Date(f.dataISO || new Date());
-            return dataF.getMonth() === mesAtual && dataF.getFullYear() === anoAtual;
-        });
-
-        let ent = 0, sai = 0;
-        financasMes.forEach(f => f.tipo === 'entrada' ? ent += f.valor : sai += f.valor);
-        const estoqueBaixo = produtos.filter(p => p.qtd < (p.min || 5)).length;
-
-        document.getElementById('dash-entradas').innerText = formatCurrency(ent);
-        document.getElementById('dash-saidas').innerText = formatCurrency(sai);
-        document.getElementById('dash-saldo').innerText = formatCurrency(ent - sai);
-        document.getElementById('dash-estoque-baixo').innerText = estoqueBaixo;
-
-        // --- Parte 2: Tabela de Histórico (Modificada para incluir botão de excluir) ---
-        // Agora pegamos o histórico completo para garantir que o índice de exclusão esteja certo
-        const logs = DB.get('historico'); 
-        const tbody = document.getElementById('dash-ultimas-movimentacoes');
-        tbody.innerHTML = '';
-        
-        // Exibimos apenas os 6 primeiros, mas passamos o índice real para deletar
-        logs.slice(0, 6).forEach((log, index) => {
-            let badge = '';
-            if(log.tipo === 'Venda') badge = '<span class="badge bg-success">Venda</span>';
-            else if(log.tipo === 'Compra/Saída' || log.tipo === 'Exclusão') badge = '<span class="badge bg-danger">Saída</span>';
-            else if(log.tipo === 'Serviço') badge = '<span class="badge bg-primary">Serviço</span>';
-            else if(log.tipo === 'Estoque') badge = '<span class="badge bg-warning text-dark">Estoque</span>';
-            else badge = '<span class="badge bg-secondary">Sistema</span>';
-
-            tbody.innerHTML += `
-                <tr>
-                    <td>${badge}</td>
-                    <td>${log.desc}</td>
-                    <td class="fw-bold text-dark">${formatCurrency(log.valor)}</td>
-                    <td class="text-muted small">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span>${formatDate(log.data)}</span>
-                            <button class="btn btn-sm text-danger border-0 hover-shadow" onclick="deletarLog(${index})" title="Apagar este registro">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-        if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma movimentação recente.</td></tr>';
-    }
 </script>
 </body>
 </html>
