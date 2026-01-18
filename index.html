@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus ERP v5.0 Ultimate</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root { --primary: #4e73df; --secondary: #858796; --success: #1cc88a; --danger: #e74a3b; --warning: #f6c23e; --bg: #f8f9fc; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); overflow-x: hidden; }
+        
+        /* Sidebar e Nav */
+        .sidebar { min-height: 100vh; background: linear-gradient(180deg, #4e73df 10%, #224abe 100%); color: white; transition: 0.3s; }
+        .brand { padding: 20px; font-size: 1.5rem; font-weight: 700; text-align: center; letter-spacing: 1px; }
+        .nav-link { color: rgba(255,255,255,0.8); margin: 5px 15px; border-radius: 10px; transition: 0.3s; cursor: pointer; padding: 12px; }
+        .nav-link:hover, .nav-link.active { background: white; color: var(--primary); transform: translateX(5px); font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        /* Cards */
+        .card-custom { border: none; border-radius: 15px; background: white; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.10); transition: 0.3s; }
+        .stat-card { border-left: 0.35rem solid; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        /* PDV */
+        .pdv-product-card { cursor: pointer; transition: 0.2s; border: 1px solid #e3e6f0; user-select: none; }
+        .pdv-product-card:hover { border-color: var(--primary); background-color: #f4f7ff; transform: scale(1.02); }
+        .cart-area { background: white; border-radius: 15px; box-shadow: -5px 0 15px rgba(0,0,0,0.05); height: calc(100vh - 40px); display: flex; flex-direction: column; position: sticky; top: 20px; }
+        .cart-items { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
+        
+        /* Badges e Utilitários */
+        .badge-status { font-size: 0.8em; padding: 5px 10px; border-radius: 20px; }
+        .qty-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; background: #fff; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .qty-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .hide { display: none !important; }
+        
+        /* Scrollbar Personalizada */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        /* Impressão (Cupom) */
+        @media print {
+            body * { visibility: hidden; }
+            #cupom-fiscal, #cupom-fiscal * { visibility: visible; }
+            #cupom-fiscal { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block sidebar">
+            <div class="brand"><i class="fas fa-rocket"></i> NEXUS PRO</div>
+            <hr class="bg-white opacity-25">
+            <ul class="nav flex-column mt-4 gap-2">
+                <li class="nav-item"><a class="nav-link active" onclick="navTo('dashboard')"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" onclick="navTo('pdv')"><i class="fas fa-cash-register me-2"></i> PDV (Vendas)</a></li>
+                <li class="nav-item"><a class="nav-link" onclick="navTo('estoque')"><i class="fas fa-box-open me-2"></i> Estoque</a></li>
+                <li class="nav-item"><a class="nav-link" onclick="navTo('financeiro')"><i class="fas fa-wallet me-2"></i> Financeiro</a></li>
+                <li class="nav-item"><a class="nav-link" onclick="navTo('os')"><i class="fas fa-tools me-2"></i> Ordens de Serviço</a></li>
+                <li class="nav-item mt-5"><a class="nav-link text-warning" onclick="resetarSistema()"><i class="fas fa-sync me-2"></i> Resetar Dados</a></li>
+            </ul>
+        </nav>
+
+        <main class="col-md-10 ms-sm-auto px-4 pt-4 pb-5">
+            
+            <div id="dashboard" class="section fade-in">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="fw-bold text-secondary mb-0">Visão Geral</h2>
+                        <small class="text-muted">Acompanhamento em tempo real</small>
+                    </div>
+                    <span id="data-hoje" class="badge bg-light text-secondary border p-2"></span>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="card card-custom stat-card border-success p-4">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <small class="text-success fw-bold text-uppercase">Entradas (Mês)</small>
+                                    <h4 id="dash-entradas" class="fw-bold mt-2">R$ 0,00</h4>
+                                </div>
+                                <i class="fas fa-arrow-up text-success opacity-50 fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-custom stat-card border-danger p-4">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <small class="text-danger fw-bold text-uppercase">Saídas (Mês)</small>
+                                    <h4 id="dash-saidas" class="fw-bold mt-2">R$ 0,00</h4>
+                                </div>
+                                <i class="fas fa-arrow-down text-danger opacity-50 fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-custom stat-card border-primary p-4">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <small class="text-primary fw-bold text-uppercase">Saldo Líquido</small>
+                                    <h4 id="dash-saldo" class="fw-bold mt-2">R$ 0,00</h4>
+                                </div>
+                                <i class="fas fa-wallet text-primary opacity-50 fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-custom stat-card border-warning p-4" onclick="verEstoqueBaixo()">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <small class="text-warning fw-bold text-uppercase">Estoque Crítico</small>
+                                    <h4 id="dash-estoque-baixo" class="fw-bold mt-2">0</h4>
+                                </div>
+                                <i class="fas fa-exclamation-triangle text-warning opacity-50 fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-custom p-4">
+                    <h5 class="fw-bold text-secondary mb-3"><i class="fas fa-history me-2"></i>Últimas Movimentações</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Descrição</th>
+                                    <th>Valor</th>
+                                    <th>Data/Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dash-ultimas-movimentacoes">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pdv" class="section hide">
+                <div class="row g-0">
+                    <div class="col-md-8 pe-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="fw-bold text-secondary">Ponto de Venda</h3>
+                            <div class="input-group w-50 shadow-sm">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                                <input type="text" id="pdv-search" class="form-control form-control-lg border-start-0" placeholder="Buscar produto..." onkeyup="renderPDVGrid()">
+                            </div>
+                        </div>
+                        <div class="row g-3" id="pdv-grid"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="cart-area p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold m-0"><i class="fas fa-shopping-cart me-2"></i>Carrinho</h5>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="limparCarrinho()"><i class="fas fa-trash me-1"></i> Limpar</button>
+                            </div>
+                            <div class="bg-light p-2 rounded mb-3 text-center text-muted small"><i class="fas fa-info-circle"></i> Clique nos produtos para adicionar</div>
+                            <div class="cart-items" id="pdv-cart-items"></div>
+                            
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex justify-content-between h4 fw-bold text-dark mb-3">
+                                    <span>Total:</span>
+                                    <span id="pdv-total">R$ 0,00</span>
+                                </div>
+                                <button class="btn btn-success w-100 btn-lg fw-bold shadow-sm py-3" onclick="abrirModalPagamento()">
+                                    <i class="fas fa-check-circle me-2"></i> FINALIZAR VENDA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="estoque" class="section hide">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold text-secondary">Controle de Estoque</h2>
+                    <div>
+                        <button class="btn btn-outline-secondary me-2 hide" id="btn-ver-todos" onclick="renderEstoque(false)">Ver Todos</button>
+                        <button class="btn btn-primary rounded-pill shadow px-4" onclick="abrirModalProduto()"><i class="fas fa-plus me-2"></i> Novo Produto</button>
+                    </div>
+                </div>
+                <div class="card card-custom p-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-uppercase text-muted small">
+                                <tr>
+                                    <th class="ps-4">Produto</th>
+                                    <th>Qtd</th>
+                                    <th>Custo</th>
+                                    <th>Venda</th>
+                                    <th>Margem</th>
+                                    <th class="text-end pe-4">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-estoque"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="financeiro" class="section hide">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold text-secondary">Fluxo Financeiro</h2>
+                    <button class="btn btn-primary rounded-pill shadow px-4" data-bs-toggle="modal" data-bs-target="#modalFinanca"><i class="fas fa-plus me-2"></i> Novo Lançamento</button>
+                </div>
+                <div class="card card-custom p-0 overflow-hidden">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-uppercase text-muted small">
+                            <tr>
+                                <th class="ps-4">Tipo</th>
+                                <th>Categoria/Descrição</th>
+                                <th>Pagamento</th>
+                                <th>Valor</th>
+                                <th>Data</th>
+                                <th class="text-end pe-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-financa"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="os" class="section hide">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold text-secondary">Ordens de Serviço</h2>
+                    <button class="btn btn-primary rounded-pill shadow px-4" onclick="abrirModalOS()"><i class="fas fa-clipboard-list me-2"></i> Nova O.S.</button>
+                </div>
+                <div class="row g-4" id="lista-os">
+                    </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPagamento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-hand-holding-usd me-2"></i>Pagamento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <h2 class="text-center fw-bold mb-4" id="modal-pag-total">R$ 0,00</h2>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Forma de Pagamento</label>
+                    <select id="pag-metodo" class="form-select form-select-lg">
+                        <option value="Dinheiro">💵 Dinheiro</option>
+                        <option value="PIX">💠 PIX</option>
+                        <option value="Cartão Débito">💳 Cartão Débito</option>
+                        <option value="Cartão Crédito">💳 Cartão Crédito</option>
+                    </select>
+                </div>
+                <button class="btn btn-success w-100 btn-lg mt-3" onclick="processarVenda()">CONFIRMAR PAGAMENTO</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalProduto" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-produto">
+                <div class="modal-header">
+                    <h5 class="modal-title">Gerenciar Produto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="prod-id">
+                    <div class="mb-3">
+                        <label>Nome do Produto</label>
+                        <input type="text" id="prod-nome" class="form-control" required>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label>Quantidade Atual</label>
+                            <input type="number" id="prod-qtd" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <label>Estoque Mínimo</label>
+                            <input type="number" id="prod-min" class="form-control" value="5">
+                        </div>
+                        <div class="col-6">
+                            <label>Custo (R$)</label>
+                            <input type="number" id="prod-custo" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="col-6">
+                            <label>Venda (R$)</label>
+                            <input type="number" id="prod-venda" class="form-control" step="0.01" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalFinanca" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lançamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-financa">
+                    <div class="mb-3">
+                        <label>Descrição</label>
+                        <input type="text" id="fin-desc" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Tipo</label>
+                        <select id="fin-tipo" class="form-select">
+                            <option value="entrada">Entrada</option>
+                            <option value="saida">Saída</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Valor</label>
+                        <input type="number" id="fin-valor" class="form-control" step="0.01" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Lançar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalOS" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-os">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Ordem de Serviço</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Cliente</label>
+                        <input type="text" id="os-cliente" class="form-control" required placeholder="Nome do cliente">
+                    </div>
+                    <div class="mb-3">
+                        <label>Descrição do Problema/Serviço</label>
+                        <textarea id="os-desc" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label>Valor Orçado (R$)</label>
+                            <input type="number" id="os-valor" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="col-6">
+                            <label>Prazo</label>
+                            <input type="date" id="os-data" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">Criar OS</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="cupom-fiscal" class="hide p-3 bg-white text-black" style="width: 300px; font-family: 'Courier New', monospace;">
+    <div class="text-center mb-3">
+        <h4 class="fw-bold">NEXUS ERP</h4>
+        <p>Rua Exemplo, 123 - Centro<br>CNPJ: 00.000.000/0001-00</p>
+        <hr style="border-top: 2px dashed black;">
+        <h5 class="fw-bold">COMPROVANTE DE VENDA</h5>
+    </div>
+    <div id="cupom-itens"></div>
+    <hr style="border-top: 2px dashed black;">
+    <div class="d-flex justify-content-between fw-bold fs-5">
+        <span>TOTAL:</span>
+        <span id="cupom-total"></span>
+    </div>
+    <div class="mt-2 text-center">
+        <p>Pagamento: <span id="cupom-pagamento"></span></p>
+        <small>Obrigado pela preferência!</small>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // --- NÚCLEO DO SISTEMA (Base de Dados Local) ---
+    const DB = {
+        get: (key) => JSON.parse(localStorage.getItem(key)) || [],
+        set: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
+        init: () => {
+            if(!localStorage.getItem('produtos')) DB.set('produtos', [
+                {id: 1, nome: 'Exemplo Produto A', qtd: 10, min: 5, custo: 50, venda: 100},
+                {id: 2, nome: 'Exemplo Produto B', qtd: 2, min: 5, custo: 20, venda: 45}
+            ]);
+            if(!localStorage.getItem('financas')) DB.set('financas', []);
+            if(!localStorage.getItem('os')) DB.set('os', []);
+            if(!localStorage.getItem('historico')) DB.set('historico', []); // NOVO: Log de tudo
+        }
+    };
+    
+    DB.init();
+    let carrinho = [];
+
+    // --- FORMATAÇÃO E UTILITÁRIOS ---
+    const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    const formatDate = (dateStr) => {
+        const d = new Date(dateStr || new Date());
+        return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    };
+
+    function registrarLog(tipo, desc, valor) {
+        const logs = DB.get('historico');
+        logs.unshift({ // Adiciona no início
+            tipo, 
+            desc, 
+            valor, 
+            data: new Date().toISOString()
+        });
+        if(logs.length > 50) logs.pop(); // Mantém apenas os últimos 50 registros
+        DB.set('historico', logs);
+    }
+
+    function navTo(id) {
+        document.querySelectorAll('.section').forEach(el => {
+            el.classList.add('hide');
+            el.classList.remove('fade-in');
+        });
+        const target = document.getElementById(id);
+        target.classList.remove('hide');
+        setTimeout(() => target.classList.add('fade-in'), 10);
+
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+        if(event && event.currentTarget) event.currentTarget.classList.add('active');
+        
+        if(id === 'dashboard') atualizarDashboard();
+        if(id === 'pdv') renderPDVGrid();
+        if(id === 'estoque') renderEstoque();
+        if(id === 'financeiro') renderFinancas();
+        if(id === 'os') renderOS();
+    }
+
+    // --- DASHBOARD ---
+    function atualizarDashboard() {
+        // Data
+        document.getElementById('data-hoje').innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+        // Cálculos
+        const financas = DB.get('financas');
+        const produtos = DB.get('produtos');
+        
+        // Filtro Mês Atual
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+
+        const financasMes = financas.filter(f => {
+            const dataF = new Date(f.dataISO || new Date());
+            return dataF.getMonth() === mesAtual && dataF.getFullYear() === anoAtual;
+        });
+
+        let ent = 0, sai = 0;
+        financasMes.forEach(f => f.tipo === 'entrada' ? ent += f.valor : sai += f.valor);
+        
+        const estoqueBaixo = produtos.filter(p => p.qtd < (p.min || 5)).length;
+
+        // Render Cards
+        document.getElementById('dash-entradas').innerText = formatCurrency(ent);
+        document.getElementById('dash-saidas').innerText = formatCurrency(sai);
+        document.getElementById('dash-saldo').innerText = formatCurrency(ent - sai);
+        document.getElementById('dash-estoque-baixo').innerText = estoqueBaixo;
+
+        // Render Tabela Últimas Movimentações (NOVO RECURSO)
+        const logs = DB.get('historico').slice(0, 6); // Pega as 6 últimas
+        const tbody = document.getElementById('dash-ultimas-movimentacoes');
+        tbody.innerHTML = '';
+        
+        logs.forEach(log => {
+            let badge = '';
+            if(log.tipo === 'Venda') badge = '<span class="badge bg-success">Venda</span>';
+            else if(log.tipo === 'Compra/Saída') badge = '<span class="badge bg-danger">Saída</span>';
+            else if(log.tipo === 'Serviço') badge = '<span class="badge bg-primary">Serviço</span>';
+            else badge = '<span class="badge bg-secondary">Sistema</span>';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${badge}</td>
+                    <td>${log.desc}</td>
+                    <td class="fw-bold text-dark">${formatCurrency(log.valor)}</td>
+                    <td class="text-muted small">${formatDate(log.data)}</td>
+                </tr>
+            `;
+        });
+        if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma movimentação recente.</td></tr>';
+    }
+
+    // --- PDV (Ponto de Venda) ---
+    function renderPDVGrid() {
+        const container = document.getElementById('pdv-grid');
+        container.innerHTML = '';
+        const search = document.getElementById('pdv-search').value.toLowerCase();
+        
+        DB.get('produtos').forEach(p => {
+            if(p.nome.toLowerCase().includes(search)) {
+                container.innerHTML += `
+                    <div class="col-md-4 col-lg-4">
+                        <div class="card p-3 pdv-product-card h-100 shadow-sm border-0" onclick="adicionarAoCarrinho(${p.id})">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-light text-secondary border">Estoque: ${p.qtd}</span>
+                            </div>
+                            <div class="fw-bold text-dark mb-1 text-truncate" title="${p.nome}">${p.nome}</div>
+                            <div class="h5 text-primary fw-bold mb-0">${formatCurrency(p.venda)}</div>
+                        </div>
+                    </div>`;
+            }
+        });
+    }
+
+    function adicionarAoCarrinho(id) {
+        const prod = DB.get('produtos').find(p => p.id === id);
+        const itemCarrinho = carrinho.find(c => c.id === id);
+        const qtdNoCarrinho = itemCarrinho ? itemCarrinho.qty : 0;
+
+        if (prod.qtd <= qtdNoCarrinho) return Swal.fire({toast: true, position: 'top-end', icon: 'error', title: 'Estoque insuficiente!', showConfirmButton: false, timer: 1500});
+
+        if (itemCarrinho) itemCarrinho.qty++;
+        else carrinho.push({ ...prod, qty: 1 });
+        
+        renderCarrinho();
+    }
+
+    function renderCarrinho() {
+        const div = document.getElementById('pdv-cart-items');
+        div.innerHTML = '';
+        let total = 0;
+
+        carrinho.forEach((item, idx) => {
+            const subtotal = item.venda * item.qty;
+            total += subtotal;
+            div.innerHTML += `
+                <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-2 rounded shadow-sm border">
+                    <div style="width: 40%" class="ps-2">
+                        <div class="fw-bold text-truncate small">${item.nome}</div>
+                        <small class="text-muted">${formatCurrency(item.venda)}</small>
+                    </div>
+                    <div class="d-flex align-items-center bg-light rounded-pill p-1">
+                        <button class="qty-btn small border-0" onclick="alterarQtd(${idx}, -1)"><i class="fas fa-minus small"></i></button>
+                        <span class="mx-2 fw-bold small">${item.qty}</span>
+                        <button class="qty-btn small border-0" onclick="alterarQtd(${idx}, 1)"><i class="fas fa-plus small"></i></button>
+                    </div>
+                    <div class="fw-bold text-end pe-2 small" style="width: 25%">${formatCurrency(subtotal)}</div>
+                </div>`;
+        });
+        
+        if(!carrinho.length) div.innerHTML = '<div class="text-center mt-5 opacity-25"><i class="fas fa-shopping-basket fa-3x"></i><p class="mt-2">Carrinho Vazio</p></div>';
+        
+        document.getElementById('pdv-total').innerText = formatCurrency(total);
+        document.getElementById('modal-pag-total').innerText = formatCurrency(total);
+    }
+
+    function alterarQtd(idx, delta) {
+        const item = carrinho[idx];
+        const prod = DB.get('produtos').find(p => p.id === item.id);
+        
+        if (delta > 0 && item.qty >= prod.qtd) return Swal.fire({toast: true, position: 'top-end', icon: 'warning', title: 'Máximo atingido', showConfirmButton: false, timer: 1000});
+        
+        item.qty += delta;
+        if (item.qty <= 0) carrinho.splice(idx, 1);
+        renderCarrinho();
+    }
+
+    function limparCarrinho() { carrinho = []; renderCarrinho(); }
+
+    function abrirModalPagamento() {
+        if(!carrinho.length) return Swal.fire('Atenção', 'Adicione produtos antes.', 'warning');
+        new bootstrap.Modal(document.getElementById('modalPagamento')).show();
+    }
+
+    function processarVenda() {
+        const metodo = document.getElementById('pag-metodo').value;
+        const produtos = DB.get('produtos');
+        const financas = DB.get('financas');
+        let total = 0;
+        let listaItensCupom = '';
+
+        carrinho.forEach(item => {
+            const pIdx = produtos.findIndex(p => p.id === item.id);
+            if(pIdx > -1) produtos[pIdx].qtd -= item.qty;
+            total += item.venda * item.qty;
+            listaItensCupom += `<div class="d-flex justify-content-between small"><span>${item.qty}x ${item.nome}</span><span>${formatCurrency(item.venda * item.qty)}</span></div>`;
+        });
+
+        // 1. Atualiza Estoque
+        DB.set('produtos', produtos);
+
+        // 2. Lança Financeiro
+        financas.push({ 
+            id: Date.now(),
+            tipo: 'entrada', 
+            desc: `Venda PDV (${metodo})`, 
+            metodo: metodo,
+            valor: total, 
+            data: new Date().toLocaleDateString(),
+            dataISO: new Date().toISOString()
+        });
+        DB.set('financas', financas);
+
+        // 3. Registra Log Global
+        registrarLog('Venda', `Venda via PDV (${carrinho.length} itens)`, total);
+
+        // 4. Gera Cupom e Limpa
+        bootstrap.Modal.getInstance(document.getElementById('modalPagamento')).hide();
+        
+        Swal.fire({
+            title: 'Venda Realizada!',
+            text: `Total: ${formatCurrency(total)}`,
+            icon: 'success',
+            showCancelButton: true,
+            confirmButtonText: 'Imprimir Cupom',
+            cancelButtonText: 'Nova Venda'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('cupom-itens').innerHTML = listaItensCupom;
+                document.getElementById('cupom-total').innerText = formatCurrency(total);
+                document.getElementById('cupom-pagamento').innerText = metodo;
+                window.print();
+            }
+            carrinho = [];
+            renderCarrinho();
+            renderPDVGrid();
+        });
+    }
+
+    // --- ESTOQUE ---
+    function renderEstoque(filtroBaixo = false) {
+        const tbody = document.getElementById('lista-estoque');
+        tbody.innerHTML = '';
+        const btnVerTodos = document.getElementById('btn-ver-todos');
+        filtroBaixo ? btnVerTodos.classList.remove('hide') : btnVerTodos.classList.add('hide');
+
+        DB.get('produtos').forEach((p, idx) => {
+            const min = p.min || 5;
+            if (filtroBaixo && p.qtd >= min) return;
+
+            // Cálculo de Margem
+            const lucro = p.venda - p.custo;
+            const margem = p.venda > 0 ? ((lucro / p.venda) * 100).toFixed(0) : 0;
+            let corMargem = 'text-success';
+            if(margem < 20) corMargem = 'text-danger';
+            else if(margem < 40) corMargem = 'text-warning';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-bold text-dark">${p.nome}</div>
+                        <small class="text-muted">ID: ${p.id}</small>
+                    </td>
+                    <td><span class="badge ${p.qtd < min ? 'bg-danger' : 'bg-success'} rounded-pill">${p.qtd} unid</span></td>
+                    <td>${formatCurrency(p.custo)}</td>
+                    <td>${formatCurrency(p.venda)}</td>
+                    <td class="${corMargem} fw-bold small">${margem}%</td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-light border" onclick="editarProduto(${idx})"><i class="fas fa-pen text-primary"></i></button>
+                        <button class="btn btn-sm btn-light border" onclick="deletarItem('produtos', ${idx}, renderEstoque)"><i class="fas fa-trash text-danger"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    function abrirModalProduto() {
+        document.getElementById('form-produto').reset();
+        document.getElementById('prod-id').value = '';
+        new bootstrap.Modal(document.getElementById('modalProduto')).show();
+    }
+
+    function editarProduto(idx) {
+        const p = DB.get('produtos')[idx];
+        document.getElementById('prod-id').value = p.id;
+        document.getElementById('prod-nome').value = p.nome;
+        document.getElementById('prod-qtd').value = p.qtd;
+        document.getElementById('prod-min').value = p.min;
+        document.getElementById('prod-custo').value = p.custo;
+        document.getElementById('prod-venda').value = p.venda;
+        new bootstrap.Modal(document.getElementById('modalProduto')).show();
+    }
+
+    // Listener do Formulário de Produto (Salvar/Editar)
+    document.getElementById('form-produto').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('prod-id').value;
+        const produtos = DB.get('produtos');
+        
+        const novoProd = {
+            id: id ? parseInt(id) : Date.now(),
+            nome: document.getElementById('prod-nome').value,
+            qtd: parseInt(document.getElementById('prod-qtd').value),
+            min: parseInt(document.getElementById('prod-min').value),
+            custo: parseFloat(document.getElementById('prod-custo').value),
+            venda: parseFloat(document.getElementById('prod-venda').value)
+        };
+
+        if(id) {
+            const idx = produtos.findIndex(p => p.id == id);
+            produtos[idx] = novoProd;
+            registrarLog('Estoque', `Produto editado: ${novoProd.nome}`, 0);
+        } else {
+            produtos.push(novoProd);
+            registrarLog('Estoque', `Novo produto: ${novoProd.nome}`, 0);
+        }
+
+        DB.set('produtos', produtos);
+        bootstrap.Modal.getInstance(document.getElementById('modalProduto')).hide();
+        renderEstoque();
+        Swal.fire('Sucesso', 'Produto salvo com sucesso!', 'success');
+    });
+
+    // --- FUNÇÃO GENÉRICA DE EXCLUSÃO ---
+    function deletarItem(chave, idx, callbackRender) {
+        Swal.fire({
+            title: 'Tem certeza?',
+            text: "Esta ação não pode ser revertida!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74a3b',
+            confirmButtonText: 'Sim, excluir!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const dados = DB.get(chave);
+                const itemRemovido = dados.splice(idx, 1);
+                DB.set(chave, dados);
+                
+                // Log da exclusão
+                let desc = itemRemovido[0].nome || itemRemovido[0].desc || itemRemovido[0].cliente || 'Item';
+                registrarLog('Exclusão', `Item removido de ${chave}: ${desc}`, 0);
+
+                callbackRender();
+                Swal.fire('Deletado!', 'O registro foi removido.', 'success');
+            }
+        });
+    }
+
+    // --- FINANCEIRO ---
+    function renderFinancas() {
+        const tbody = document.getElementById('lista-financa');
+        tbody.innerHTML = '';
+        const financas = DB.get('financas').sort((a,b) => new Date(b.dataISO) - new Date(a.dataISO)); // Ordenar por data (mais recente)
+
+        financas.forEach((f, idx) => {
+            const isEntrada = f.tipo === 'entrada';
+            const color = isEntrada ? 'text-success' : 'text-danger';
+            const icon = isEntrada ? 'fa-arrow-up' : 'fa-arrow-down';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td class="ps-4"><i class="fas ${icon} ${color} me-2"></i><span class="text-uppercase small fw-bold ${color}">${f.tipo}</span></td>
+                    <td>
+                        <div class="fw-bold text-dark">${f.desc}</div>
+                        <small class="text-muted">${f.metodo || 'Manual'}</small>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">${f.metodo || 'Geral'}</span></td>
+                    <td class="fw-bold ${color}">${isEntrada ? '+' : '-'} ${formatCurrency(f.valor)}</td>
+                    <td class="text-muted small">${f.data}</td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-light border" onclick="deletarItem('financas', ${idx}, renderFinancas)"><i class="fas fa-trash text-danger"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        if(financas.length === 0) tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum lançamento financeiro.</td></tr>';
+    }
+
+    document.getElementById('form-financa').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const financas = DB.get('financas');
+        const valor = parseFloat(document.getElementById('fin-valor').value);
+        const tipo = document.getElementById('fin-tipo').value;
+
+        financas.push({
+            id: Date.now(),
+            tipo: tipo,
+            desc: document.getElementById('fin-desc').value,
+            valor: valor,
+            metodo: 'Manual',
+            data: new Date().toLocaleDateString(),
+            dataISO: new Date().toISOString()
+        });
+
+        DB.set('financas', financas);
+        registrarLog('Financeiro', `Lançamento manual (${tipo})`, valor);
+        
+        bootstrap.Modal.getInstance(document.getElementById('modalFinanca')).hide();
+        renderFinancas();
+        Swal.fire('Sucesso', 'Lançamento registrado!', 'success');
+    });
+
+    // --- ORDENS DE SERVIÇO (OS) ---
+    function renderOS() {
+        const container = document.getElementById('lista-os');
+        container.innerHTML = '';
+        const osList = DB.get('os');
+
+        osList.forEach((os, idx) => {
+            const statusClass = os.concluido ? 'bg-success' : 'bg-warning text-dark';
+            const statusText = os.concluido ? 'Concluído' : 'Pendente';
+            const btnAction = os.concluido 
+                ? `<button class="btn btn-sm btn-secondary" disabled>Finalizado</button>`
+                : `<button class="btn btn-sm btn-success" onclick="concluirOS(${idx})"><i class="fas fa-check me-1"></i> Concluir</button>`;
+
+            container.innerHTML += `
+                <div class="col-md-4">
+                    <div class="card card-custom h-100 p-3 border-start border-4 ${os.concluido ? 'border-success' : 'border-warning'}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge ${statusClass}">${statusText}</span>
+                            <small class="text-muted">${formatDate(os.dataCriacao)}</small>
+                        </div>
+                        <h5 class="fw-bold mb-1">${os.cliente}</h5>
+                        <p class="text-muted small mb-3 text-truncate">${os.desc}</p>
+                        
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="fw-bold text-primary">${formatCurrency(os.valor)}</span>
+                                <small class="text-danger fw-bold"><i class="far fa-clock me-1"></i> Prazo: ${new Date(os.prazo).toLocaleDateString()}</small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                ${btnAction}
+                                <button class="btn btn-sm btn-outline-danger w-100" onclick="deletarItem('os', ${idx}, renderOS)"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        if(osList.length === 0) container.innerHTML = '<div class="col-12 text-center text-muted mt-5"><i class="fas fa-clipboard-list fa-3x mb-3 opacity-25"></i><p>Nenhuma Ordem de Serviço cadastrada.</p></div>';
+    }
+
+    document.getElementById('form-os').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const osList = DB.get('os');
+        const valor = parseFloat(document.getElementById('os-valor').value);
+        
+        osList.push({
+            id: Date.now(),
+            cliente: document.getElementById('os-cliente').value,
+            desc: document.getElementById('os-desc').value,
+            valor: valor,
+            prazo: document.getElementById('os-data').value,
+            dataCriacao: new Date().toISOString(),
+            concluido: false
+        });
+
+        DB.set('os', osList);
+        registrarLog('Serviço', `Nova OS criada para ${document.getElementById('os-cliente').value}`, valor);
+        
+        bootstrap.Modal.getInstance(document.getElementById('modalOS')).hide();
+        renderOS();
+        Swal.fire('Sucesso', 'Ordem de Serviço criada!', 'success');
+    });
+
+    function concluirOS(idx) {
+        Swal.fire({
+            title: 'Concluir Serviço?',
+            text: "Deseja finalizar e lançar o valor no financeiro?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, finalizar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const osList = DB.get('os');
+                const os = osList[idx];
+                os.concluido = true;
+                DB.set('os', osList);
+
+                // Lança no financeiro automaticamente
+                const financas = DB.get('financas');
+                financas.push({
+                    id: Date.now(),
+                    tipo: 'entrada',
+                    desc: `Recebimento OS - ${os.cliente}`,
+                    valor: os.valor,
+                    metodo: 'Serviço',
+                    data: new Date().toLocaleDateString(),
+                    dataISO: new Date().toISOString()
+                });
+                DB.set('financas', financas);
+                registrarLog('Serviço', `OS Concluída: ${os.cliente}`, os.valor);
+
+                renderOS();
+                Swal.fire('Concluído!', 'Serviço finalizado e valor lançado em caixa.', 'success');
+            }
+        });
+    }
+
+    // --- SISTEMA ---
+    function verEstoqueBaixo() {
+        navTo('estoque');
+        renderEstoque(true); // Ativa filtro de estoque baixo
+    }
+
+    function resetarSistema() {
+        Swal.fire({
+            title: 'PERIGO: APAGAR TUDO?',
+            text: "Isso apagará todos os produtos, vendas e histórico. Digite 'DELETAR' para confirmar.",
+            input: 'text',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Apagar Tudo'
+        }).then((result) => {
+            if (result.value === 'DELETAR') {
+                localStorage.clear();
+                location.reload();
+            } else if (result.isConfirmed) {
+                Swal.fire('Cancelado', 'A palavra de confirmação estava incorreta.', 'error');
+            }
+        });
+    }
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+        navTo('dashboard');
+    });
+
+// --- NOVO: FUNCIONALIDADE DE EXCLUIR HISTÓRICO (Cole no final do script) ---
+
+    // 1. Função para deletar um item específico do histórico
+    function deletarLog(index) {
+        Swal.fire({
+            title: 'Apagar registro?',
+            text: "Deseja remover este item do histórico?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Sim, apagar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const logs = DB.get('historico');
+                logs.splice(index, 1); // Remove o item baseado na posição
+                DB.set('historico', logs);
+                atualizarDashboard(); // Atualiza a tela imediatamente
+                
+                const Toast = Swal.mixin({
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 1500,
+                    didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
+                });
+                Toast.fire({ icon: 'success', title: 'Registro removido' });
+            }
+        });
+    }
+
+    // 2. Sobrescrevemos a função atualizarDashboard para adicionar o botão "X"
+    // O JavaScript permite redefinir a função. Esta nova versão substitui a antiga.
+    function atualizarDashboard() {
+        // --- Parte 1: Cards e Data (Mantida igual) ---
+        document.getElementById('data-hoje').innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+        
+        const financas = DB.get('financas');
+        const produtos = DB.get('produtos');
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+
+        const financasMes = financas.filter(f => {
+            const dataF = new Date(f.dataISO || new Date());
+            return dataF.getMonth() === mesAtual && dataF.getFullYear() === anoAtual;
+        });
+
+        let ent = 0, sai = 0;
+        financasMes.forEach(f => f.tipo === 'entrada' ? ent += f.valor : sai += f.valor);
+        const estoqueBaixo = produtos.filter(p => p.qtd < (p.min || 5)).length;
+
+        document.getElementById('dash-entradas').innerText = formatCurrency(ent);
+        document.getElementById('dash-saidas').innerText = formatCurrency(sai);
+        document.getElementById('dash-saldo').innerText = formatCurrency(ent - sai);
+        document.getElementById('dash-estoque-baixo').innerText = estoqueBaixo;
+
+        // --- Parte 2: Tabela de Histórico (Modificada para incluir botão de excluir) ---
+        // Agora pegamos o histórico completo para garantir que o índice de exclusão esteja certo
+        const logs = DB.get('historico'); 
+        const tbody = document.getElementById('dash-ultimas-movimentacoes');
+        tbody.innerHTML = '';
+        
+        // Exibimos apenas os 6 primeiros, mas passamos o índice real para deletar
+        logs.slice(0, 6).forEach((log, index) => {
+            let badge = '';
+            if(log.tipo === 'Venda') badge = '<span class="badge bg-success">Venda</span>';
+            else if(log.tipo === 'Compra/Saída' || log.tipo === 'Exclusão') badge = '<span class="badge bg-danger">Saída</span>';
+            else if(log.tipo === 'Serviço') badge = '<span class="badge bg-primary">Serviço</span>';
+            else if(log.tipo === 'Estoque') badge = '<span class="badge bg-warning text-dark">Estoque</span>';
+            else badge = '<span class="badge bg-secondary">Sistema</span>';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${badge}</td>
+                    <td>${log.desc}</td>
+                    <td class="fw-bold text-dark">${formatCurrency(log.valor)}</td>
+                    <td class="text-muted small">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>${formatDate(log.data)}</span>
+                            <button class="btn btn-sm text-danger border-0 hover-shadow" onclick="deletarLog(${index})" title="Apagar este registro">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma movimentação recente.</td></tr>';
+    }
+</script>
+</body>
+</html>
